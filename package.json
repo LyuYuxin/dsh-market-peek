@@ -1,0 +1,54 @@
+{
+  "name": "dsh-market-peek",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Preview plugin-market entries inside DSH: open the repository in the right Sidebar's built-in browser, or show its README in a panel docked beside the market. · 在 DSH 内预览插件市场条目，不再跳出外部浏览器。",
+  "license": "MIT",
+  "author": {
+    "name": "LyuYuxin",
+    "url": "https://github.com/LyuYuxin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LyuYuxin/dsh-market-peek.git"
+  },
+  "homepage": "https://github.com/LyuYuxin/dsh-market-peek#readme",
+  "bugs": {
+    "url": "https://github.com/LyuYuxin/dsh-market-peek/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "screenshots.json",
+    "assets",
+    "README.md",
+    "README_EN.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dshmarket",
+    "preview"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0-rc.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ]
+    }
+  }
+}
