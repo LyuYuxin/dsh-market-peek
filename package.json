@@ -1,8 +1,8 @@
 {
   "name": "dsh-market-peek",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Preview plugin-market entries inside DSH: open the repository in the right Sidebar's built-in browser, or show its README in a panel docked beside the market. · 在 DSH 内预览插件市场条目，不再跳出外部浏览器。",
+  "description": "Preview plugin-market entries inside DSH: open the repository in the right Sidebar's built-in browser, or show its README in a panel docked beside the market.",
   "license": "MIT",
   "author": {
     "name": "LyuYuxin",
@@ -16,29 +16,45 @@
   "bugs": {
     "url": "https://github.com/LyuYuxin/dsh-market-peek/issues"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
     "client.js",
     "cordis.patch.yml",
     "screenshots.json",
+    "locale/*.json",
+    "icon.svg",
     "assets",
     "README.md",
     "README_EN.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "keywords": [
+    "dsh",
     "dsh-plugin",
     "deepseek-harness",
     "dshmarket",
+    "plugin-market",
+    "readme",
     "preview"
   ],
   "engines": {
-    "dsh": ">=0.2.0-rc.1"
+    "dsh": ">=0.2.1-rc.3"
   },
   "dsh": {
     "bundle": {

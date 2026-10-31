@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Plugin Market Peek",
+    "description": "Preview plugin-market entries inside DSH: open the repository in the right Sidebar's built-in browser, or show its README in a panel docked beside the market."
+  }
+}

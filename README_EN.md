@@ -1,35 +1,134 @@
 # dsh-market-peek
 
-English · [中文](README.md)
+[中文](README.md) · English
 
-Clicking a plugin card in the DeepSeek Harness plugin market **no longer jumps to an external browser** — the plugin's details open inside DSH.
+[![npm version](https://img.shields.io/npm/v/dsh-market-peek.svg)](https://www.npmjs.com/package/dsh-market-peek)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-market-peek.svg)](https://www.npmjs.com/package/dsh-market-peek)
+[![test](https://github.com/LyuYuxin/dsh-market-peek/actions/workflows/test.yml/badge.svg)](https://github.com/LyuYuxin/dsh-market-peek/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![DSH](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.3-2f6fed)](https://github.com/deepseek-ai/deepseek-harness)
 
-![Preview](assets/screenshot-1.webp)
+Clicking a plugin card in the DeepSeek Harness plugin market **no longer jumps to an external browser** — the details open inside DSH:
+
+- With a right Sidebar on screen, the repository opens in DSH's own browser tab there; clicking more cards reuses the same preview tab.
+- Without a right Sidebar, a panel docks on the right of the market and shows the README; the market narrows to make room, so nothing is covered.
+- Leaving the market restores everything: the panel closes, the market gets its width back, the preview tab is closed, and a right Sidebar that was collapsed collapses again.
+
+![Plugin market peek: the market on the left and the docked README panel on the right](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.0/assets/screenshot-1.png)
 
 ## Features
 
-- **Full-page market**: a panel docks on the right of the market and shows the plugin's README. It does not cover the market; the market narrows to make room.
-- **Market opened from a conversation** (right Sidebar available): the repository opens in DSH's built-in browser in the right Sidebar. Clicking more cards reuses the same tab.
-- **Restored on leave**: when you switch to another page or conversation, the panel closes, the market gets its width back and the preview tab is closed; a right Sidebar that was collapsed collapses again.
-- Clicking the plugin title or a blank part of the card triggers it; install, favourite and comment buttons keep their original behaviour.
-- The panel's footer switches the click behaviour between **Expand here** (default) and **External browser**.
-- Ctrl / Cmd / Shift / Alt-click still opens the external browser.
-- Drag the panel's left edge to resize it (remembered); close it with Esc or ×.
+- **Preview from a card click.** Click the plugin title or a blank part of the card; install, favourite, comment and screenshot buttons keep their original behaviour. Ctrl / Cmd / Shift / Alt-click still opens the external browser.
+- **Two ways to expand.** When a conversation's right Sidebar is available, the repository opens in DSH's built-in browser (one reused preview tab). On a full-page market without a visible right Sidebar, a README panel docks on the right and the market moves aside.
+- **Restored on leave.** Switching page, conversation or market closes the panel, restores the market width and closes the preview tab; a collapsed right Sidebar collapses again.
+- **Resizable panel.** Drag its left edge; the width is remembered in `localStorage` (`dsh-market-peek:width`). Close with Esc or ×.
+- **Switchable click behaviour.** The panel footer picks **Expand here** (default) or **External browser**, remembered in `dsh-market-peek:mode`.
+- **README fallback chain.** Tries GitHub's rendered API response, then four README filenames on `raw.githubusercontent.com`, then the jsDelivr mirror; moves on when a source fails.
+- **Follows DSH theme and language.** The panel uses `--dsw-alias-*` theme tokens, so light/dark follow automatically, and its copy follows DSH's current language (Chinese / English).
+- **Own icon and localized metadata.** The plugin manager shows a dedicated icon, title and description (`locale/en.json`, `locale/zh.json`).
+
+## Supported markets
+
+| Market | Verified version | Trigger | Notes |
+|---|---|---|---|
+| `dshmarket` (community market, primary target) | 1.73.3 | card title or blank card area | Recognised through `[data-dsh-market-root]`, `*_card` and `*_nmLink`; the stable `data-dsh-market-root` marker is used first |
+| `@deepseek-ai/dsh-client-ui-plugin-market` (DSH's built-in experimental market) | 0.2.1-rc.3 | card (title or blank area) | Cards carry no repository URL, so the adapter resolves it through the market's own `remote.pluginMarket` client service; it **does not intercept the market's own click**, so the detail view still opens |
+| Anything else / older markets | — | not intercepted | When no repository link can be found, clicks are left completely untouched |
+
+## How it works
+
+### How it detects the market
+
+- **Community market (`dshmarket`):** a card is an element whose CSS-module class ends with `*_card`; its title is an anchor whose class ends with `*_nmLink` and whose `href` is the GitHub repository. The page root comes from `[data-dsh-market-root]`; if absent, the `<prefix>_root` class is derived from the `*_nmLink` token, then `[class*="_root"]` is tried. Blank-card clicks ignore buttons, inputs, images, menus and active text selections.
+- **Built-in market:** cards carry `data-market-entry="<package name>"` and the page root is `[data-plugin-tab="discover"]`. The adapter does not read the repository URL from the DOM: it reads the Client service through `ctx.get('remote').pluginMarket` (so no `inject` declaration is needed), calls `listIndexes()`, matches the exact entry name with a relevance search plus a bounded paged-scan fallback, and parses `repository.url` (including `repository.directory` for monorepo packages) / `homepage`. When the service is absent or resolution fails, it does nothing and the market is untouched.
+- **Right Sidebar:** DSH's official `ctx.sidebarRight` service (`openTab` / `tabsIn` / `close` / `closeIn` / `active` / `mounted` / `isExpanded` / `toggleExpanded`) opens and closes the preview tab; visibility is checked with `[data-sidebar-right-session]`. When no Sidebar can be detected, the plugin falls back to the docked panel.
+
+### How the README is loaded
+
+1. `https://api.github.com/repos/<owner>/<repo>/readme` with `Accept: application/vnd.github.html+json` (HTML rendered by GitHub, relative links resolved).
+2. `README.md`, `readme.md`, `README_ZH.md`, `Readme.md` from `raw.githubusercontent.com` (rendered by the built-in Markdown renderer).
+3. The jsDelivr mirror `https://cdn.jsdelivr.net/gh/<owner>/<repo>[@ref]/README.md`.
+
+Each request times out after 12 s, the body is capped at 2 MiB, closing the panel aborts pending requests, and parsed results are cached per repository for 5 minutes (at most 24 entries); the cache is cleared when the panel closes or the market page is left.
 
 ## Install
 
-Search for `dsh-market-peek` in the DSH plugin market and click Install, or:
+Requirements: DeepSeek Harness `>= 0.2.1-rc.3` (Desktop or `dsh web`), with a plugin market enabled (the community `dshmarket` plugin or DSH's built-in experimental market).
+
+**From npm (recommended):**
 
 ```sh
-dsh plugin add github:LyuYuxin/dsh-market-peek
+dsh plugin --profile desktop add dsh-market-peek
 ```
 
-## Notes
+**From GitHub:**
 
-- The README is fetched from the GitHub API (rendered), then raw.githubusercontent.com, then the jsDelivr mirror.
-- It is shown in a sandboxed iframe without script permission: content is displayed, never executed.
-- Cards are recognised by the market's CSS class names; if a market update breaks clicking, please open an issue.
+```sh
+dsh plugin --profile desktop add github:LyuYuxin/dsh-market-peek
+```
+
+**Local development:** link the checkout into the profile, or install the directory with `plugin_manager`'s `install_bundle` (see `cordis-plugin-development`). Client-plugin changes apply after a page refresh.
+
+Then open the plugin market and click any plugin card.
+
+## Settings
+
+| Setting | Stored in | Default | Meaning |
+|---|---|---|---|
+| Click behaviour | `localStorage`, `dsh-market-peek:mode` | `here` (expand here) | Switch in the panel footer; `external` sends card clicks to the system browser |
+| Panel width | `localStorage`, `dsh-market-peek:width` | 40% of the window | At least 360 px and always leaves 320 px to the market; updated by dragging the left edge |
+
+Shortcuts:
+
+- `Esc` closes the panel.
+- `Ctrl` / `Cmd` / `Shift` / `Alt` + card click opens the external browser once, without changing the setting.
+
+## Known limitations
+
+- **The market DOM is the dependency.** Card detection relies on `dshmarket`'s CSS-module conventions (`*_card`, `*_nmLink`, `<prefix>_root`). A market redesign or a different market plugin can break it; the plugin then falls back to "do not intercept" and never breaks the market itself. `data-dsh-market-root` is a marker the market uses itself and is preferred.
+- **The built-in market resolves asynchronously.** Its cards carry no repository URL, so the first click on a given card waits for one local service round trip (indexes are cached by the Host, so this is usually fast) before the preview appears. The market's own detail view also opens — deliberately, so the market's click is never swallowed. In "external browser" mode the adapter leaves the built-in market alone (the detail view keeps handling the click), because an asynchronous `window.open` would be popup-blocked. On a Host without `remote.pluginMarket` (older DSH or no market plugin), the built-in market is completely unaffected.
+- **GitHub only.** Only `github.com` / `www.github.com` https repository addresses are accepted (http is normalised to https); other hosts, credentials and ports are ignored. GitLab, Gitee and similar repositories never trigger a preview.
+- **GitHub API rate limits.** Unauthenticated GitHub API allows 60 requests per hour; after that the plugin falls back to raw / jsDelivr. READMEs of private repositories cannot be read.
+- **Simplified Markdown.** The raw fallback uses a small renderer (headings, lists, tables, quotes, code blocks, inline formatting, links and images); advanced extensions can look less complete than on GitHub.
+- **The panel overlays the window's right side.** Docked mode adds `margin-right` to the market to make room; on a page with a fixed width that cannot reflow, the panel may sit close to the content — drag it narrower or use the built-in browser mode.
+
+## Security
+
+- The README is shown in an iframe **without script permission**: `sandbox="allow-popups allow-popups-to-escape-sandbox"`, with neither `allow-scripts` nor `allow-same-origin`. Scripts in a README never execute.
+- The README document also carries a strict CSP: `default-src 'none'`, `script-src 'none'`, `object-src 'none'`, `frame-src 'none'`, `connect-src 'none'`, `form-action 'none'`; only https images, inline styles and https fonts are allowed; `base-uri` is limited to GitHub hosts. It also sends `<meta name="referrer" content="no-referrer">`.
+- Repository addresses are limited to ordinary `github.com` repository/`tree` paths; other protocols, credentials, ports, `..` segments and illegal characters are rejected. READMEs are fetched only from `api.github.com`, `raw.githubusercontent.com` and `cdn.jsdelivr.net`.
+- Requests have a 12 s timeout, a 2 MiB cap and are aborted when the panel closes; the cache expires after 5 minutes, is capped at 24 entries and is cleared when the panel closes or the market page is left, so it cannot leak, grow without bound, or show stale content.
+- **Accepted risk:** READMEs come from third-party repositories and may contain HTML (badges) and arbitrary https images. That content renders in the sandboxed iframe without script permission, so scripts cannot run; image requests still expose your IP to the image host (Referer is suppressed), and links may take the user to external sites (only when clicked). This is inherent to displaying third-party READMEs; the plugin never executes their code.
+- The plugin makes no network requests other than the README/market calls above, reads no conversation content, and writes no files.
+
+## Tests
+
+```sh
+node --check index.js
+node --check client.js
+node --test test/*.test.mjs
+```
+
+The tests have no third-party dependencies and cover GitHub URL parsing (`tree`/ref/sub-directory, dangerous addresses rejected), the README source fallback order, Markdown rendering and escaping, CSP document generation, mode persistence, width clamping, and the official-market adapter reading services only through `ctx.get` and resolving repositories (including monorepo directories). `client.js` exposes these functions through a `__test` property on the module object; runtime behaviour is unchanged. CI runs the same checks on Ubuntu and Windows with Node 22/24 (`.github/workflows/test.yml`).
+
+## FAQ
+
+**Clicking a card does nothing?** Check that the market is one of the "Supported markets" and that it links to a `github.com` repository. The built-in market needs the `remote.pluginMarket` service; on older DSH the plugin leaves the market untouched. If a market just launched a redesign, please open an issue.
+
+**Why does the repository open in the right Sidebar instead of the panel?** On a conversation page with a visible right Sidebar, DSH's built-in browser is preferred (consecutive card clicks reuse the same tab). The panel is used when there is no Sidebar or it is covered by a full-page view.
+
+**How do I get the external browser by default again?** In the panel footer, change "On card click" to "External browser". Ctrl/Cmd/Shift/Alt-click does it for a single click.
+
+**The README looks stale?** A parsed result is cached for 5 minutes and cleared when the panel closes or the market page is left, so reopening it fetches fresh content.
+
+**Are GitLab / Gitee repositories supported?** No, only `github.com`.
+
+**Do you execute scripts in README files?** No — see "Security".
+
+## Version
+
+Current version `0.2.0`; see [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
