@@ -40,7 +40,7 @@
 ### 如何识别插件市场
 
 - **社区市场 `dshmarket`：** 卡片是带 `*_card` 类名的元素，标题是 `href` 指向 GitHub 仓库、类名以 `*_nmLink` 结尾的链接。页面根优先取 `[data-dsh-market-root]`，取不到时由 `*_nmLink` 的 CSS-module 前缀推导 `<前缀>_root`，再退回 `[class*="_root"]`。点击卡片空白处时会排除按钮、输入框、图片、菜单和正在选中的文本。
-- **内置市场：** 卡片带 `data-market-entry="<包名>"`，页面根是 `[data-plugin-tab="discover"]`。插件不读 DOM 里的仓库地址，而是通过 `ctx.get('remote').pluginMarket` 读取客户端服务（因此不需要声明 `inject`），调用 `listIndexes()`，先用 relevance 搜索并按精确包名匹配、找不到再退化为有界分页扫描，最后用条目里的 `repository.url`（含 monorepo 的 `repository.directory`）/ `homepage` 解析仓库。解析失败或服务不存在时什么都不做，内置市场保持原样。
+- **内置市场：** 卡片带 `data-market-entry="<包名>"`，发现页签是 `[data-plugin-tab="discover"]`。插件不读 DOM 里的仓库地址，而是通过 `ctx.get('remote').pluginMarket` 读取客户端服务（因此不需要声明 `inject`），调用 `listIndexes()`，先用 relevance 搜索并按精确包名匹配、找不到再退化为有界分页扫描，最后用条目里的 `repository.url`（含 monorepo 的 `repository.directory`）/ `homepage` 解析仓库。面板停靠在 `[data-plugin-panel]` 这个插件页根元素旁（从列表切到详情时它仍然存在），只有离开整个插件页才关闭；解析失败或服务不存在时什么都不做，内置市场保持原样。
 - **右侧栏：** 通过 DSH 官方的 `ctx.sidebarRight` 服务（`openTab` / `tabsIn` / `close` / `closeIn` / `active` / `mounted` / `isExpanded` / `toggleExpanded`）打开和关闭预览页签；可见性用 `[data-sidebar-right-session]` 判断。检测不到右侧栏时自动退回停靠面板。
 
 ### README 怎么加载
@@ -86,7 +86,7 @@ dsh plugin --profile desktop add github:LyuYuxin/dsh-market-peek
 ## 已知限制
 
 - **依赖市场 DOM。** 社区市场的卡片识别依赖 `dshmarket` 的 CSS-module 约定（`*_card`、`*_nmLink`、`<前缀>_root`）。市场改版或换用别的插件市场时可能失效；插件会退回「不拦截」，不会破坏市场本身。`data-dsh-market-root` 是市场自己也在用的稳定标记，优先使用。
-- **内置市场是异步解析。** DSH 内置市场的卡片不带仓库地址，第一次点某张卡片要等一次本地服务往返（索引由 Host 缓存，通常很快）才会出现预览；同时市场自己的详情页仍会打开，这是刻意的「不吞点击」设计。选择「外部浏览器」模式时内置市场不做额外接管（仍由市场详情页处理），避免异步 `window.open` 被弹窗拦截。Host 没有提供 `remote.pluginMarket`（更旧的 DSH 或未启用市场）时，内置市场完全不受影响。
+- **内置市场是异步解析。** DSH 内置市场的卡片不带仓库地址，第一次点某张卡片要等一次本地服务往返（索引由 Host 缓存，通常很快）才会出现预览；同时市场自己的详情页仍会打开，这是刻意的「不吞点击」设计。面板停靠在插件页根元素旁，从列表进入详情不会关闭，只有离开整个插件页才恢复。选择「外部浏览器」模式时内置市场不做额外接管（仍由市场详情页处理），避免异步 `window.open` 被弹窗拦截。Host 没有提供 `remote.pluginMarket`（更旧的 DSH 或未启用市场）时，内置市场完全不受影响；解析失败时控制台会为每个包名打印一次 `[dsh-market-peek] official market preview skipped for ...` 警告，便于区分「服务缺失」和「索引里没有仓库地址」。
 - **只支持 GitHub。** 只接受 `github.com` / `www.github.com` 的 https 仓库地址（http 会规范成 https）；其它域名、带账号密码或端口的地址一律忽略。GitLab、Gitee 等仓库不会触发预览。
 - **GitHub API 限流。** 未登录的 GitHub API 每小时 60 次；超限后自动回退到 raw / jsDelivr。私有仓库的 README 读不到。
 - **Markdown 是简化渲染。** raw 回退使用内置的小型渲染器（标题、列表、表格、引用、代码块、行内格式、链接和图片）；复杂扩展语法可能显示得不如 GitHub 完整。
@@ -109,7 +109,7 @@ node --check client.js
 node --test test/*.test.mjs
 ```
 
-测试无第三方依赖，覆盖：GitHub URL 解析（`tree`/ref/子目录、拒绝危险地址）、README 来源回退顺序、Markdown 渲染与转义、CSP 文档生成、模式持久化、宽度夹取，以及官方市场适配器只通过 `ctx.get` 读取服务并解析仓库（含 monorepo 子目录）。`client.js` 通过模块对象上的 `__test` 暴露这些函数，运行时行为不受影响。CI 在 Ubuntu 和 Windows 的 Node 22/24 上跑同一组检查（`.github/workflows/test.yml`）。
+测试无第三方依赖，覆盖：GitHub URL 解析（`tree`/ref/子目录、拒绝危险地址）、README 来源回退顺序、Markdown 渲染与转义、CSP 文档生成、模式持久化、宽度夹取，以及官方市场适配器只通过 `ctx.get` 读取服务、解析仓库（含 monorepo 子目录）并在列表/详情切换时重定位停靠根。`client.js` 通过模块对象上的 `__test` 暴露这些函数，运行时行为不受影响。CI 在 Ubuntu 和 Windows 的 Node 22/24 上跑同一组检查（`.github/workflows/test.yml`）。
 
 ## 常见问题
 

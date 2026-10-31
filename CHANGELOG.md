@@ -75,6 +75,12 @@ targets.
 - Parsed READMEs expire after 5 minutes and are cleared when the panel closes or the market
   page is left, so reopening always fetches fresh content; the panel also re-evaluates the
   dark/light theme on every open instead of only when it is first built.
+- Built-in-market previews no longer disappear when the market navigates from its list to
+  its in-page detail view: the dock is pinned to the `[data-plugin-panel]` Plugins-page root
+  (which survives the transition) and re-pinned on the watcher tick if that root is replaced.
+  Only leaving the whole Plugins page restores everything. A single `console.warn` per entry
+  name now reports a failed adapter resolution, so E2E logs can distinguish a missing
+  `remote.pluginMarket` service from an index entry without a repository URL.
 
 ### Security
 

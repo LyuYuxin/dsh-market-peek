@@ -13,7 +13,7 @@ test('module definition and test seam', () => {
   assert.equal(definition.id, 'dsh-market-peek')
   assert.equal(typeof definition.factory, 'function')
   assert.equal(typeof definition.factory().apply, 'function')
-  for (const name of ['esc', 'parseRepo', 'readmeSources', 'renderMarkdown', 'readmeDocument', 'normalizeMode', 'readMode', 'readWidth', 'clampWidthTo']) {
+  for (const name of ['esc', 'parseRepo', 'readmeSources', 'renderMarkdown', 'readmeDocument', 'normalizeMode', 'readMode', 'readWidth', 'clampWidthTo', 'officialMarket', 'resolveOfficialRepo', 'nextOfficialRoot']) {
     assert.equal(typeof helpers[name], 'function', `${name} is exposed`)
   }
 })
@@ -239,6 +239,22 @@ test('official adapter reads services through ctx.get and resolves entries (no i
     globalThis.window = savedWindow
     globalThis.document = savedDocument
   }
+})
+
+test('official dock root re-pins to a surviving page root, not the replaced market section', () => {
+  const detailPage = { kind: 'page', visible: true }
+  const discoverSection = { kind: 'tab', visible: false }
+  const installedTab = { kind: 'tab', visible: true }
+  const visible = (node) => node.visible === true
+  // While the pinned root is still visible, keep it.
+  assert.equal(helpers.nextOfficialRoot(detailPage, [discoverSection], visible), detailPage)
+  // The list/detail navigation replaces the pinned root: move to the surviving page root.
+  assert.equal(helpers.nextOfficialRoot(discoverSection, [detailPage, installedTab], visible), detailPage)
+  // Nothing visible means the user left the Plugins page: signal a full restore with null.
+  assert.equal(helpers.nextOfficialRoot(discoverSection, [discoverSection], visible), null)
+  assert.equal(helpers.nextOfficialRoot(null, [], visible), null)
+  // A null/false candidate is ignored rather than throwing.
+  assert.equal(helpers.nextOfficialRoot(null, [null, false, installedTab], visible), installedTab)
 })
 
 test('normalizeMode and readMode persist only the two known modes', () => {

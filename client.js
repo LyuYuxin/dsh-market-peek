@@ -331,6 +331,42 @@ var dshMarketPeekModule = {
       return null;
     }
 
+    /** Warn at most once per entry name so a broken market does not flood the console. */
+    const officialWarned = new Set();
+    function warnOfficialFailure(name, reason) {
+      if (officialWarned.has(name)) return;
+      officialWarned.add(name);
+      console.warn(`[dsh-market-peek] official market preview skipped for "${name}": ${reason}`);
+    }
+
+    /**
+     * The Plugin Manager page root that survives the built-in market's list -> detail navigation.
+     * The card itself is unmounted when the detail view replaces the list, and the Discover section
+     * can be replaced too, so both are unusable as a long-lived dock root; `[data-plugin-panel]` is
+     * the page around them and unmounts only when the user leaves the Plugins page.
+     */
+    function officialRootCandidates() {
+      const roots = [];
+      if (typeof document.querySelectorAll !== 'function') return roots;
+      for (const panel of document.querySelectorAll('[data-plugin-panel]')) roots.push(panel);
+      for (const tab of document.querySelectorAll('[data-plugin-tab]')) {
+        const panel = tab.closest?.('[data-plugin-panel]') ?? tab;
+        if (!roots.includes(panel)) roots.push(panel);
+      }
+      return roots;
+    }
+
+    /** Re-pin decision: keep the current root while it is visible, else the first visible candidate. */
+    function nextOfficialRoot(pinned, candidates, visible) {
+      if (pinned && visible(pinned)) return pinned;
+      for (const node of candidates) if (node && visible(node)) return node;
+      return null;
+    }
+
+    function officialPageRoot() {
+      return nextOfficialRoot(null, officialRootCandidates(), isShown);
+    }
+
     /** Preview a built-in market entry without disturbing the market's own click handling. */
     function previewOfficialCard(card) {
       const name = card.getAttribute('data-market-entry');
@@ -338,10 +374,23 @@ var dshMarketPeekModule = {
       // In "external browser" mode the market's own detail view is the better target: a window.open
       // after the asynchronous resolution would not be tied to the click gesture (popup blocked).
       if (getMode() === 'external') return false;
+      if (!officialMarket()) {
+        warnOfficialFailure(name, 'the remote.pluginMarket client service is unavailable');
+        return false;
+      }
       resolveOfficialRepo(name).then((repo) => {
-        if (!repo) return;
-        const root = card.isConnected ? card.closest(OFFICIAL_DISCOVER) : null;
-        if (root) openRepoPreview(repo, root, name);
+        if (!repo) {
+          warnOfficialFailure(name, 'no GitHub repository was resolved from the configured market index');
+          return;
+        }
+        // The card is usually gone by now (the market has already opened its detail view); dock to
+        // the Plugins page root instead of the card's market section.
+        const root = officialPageRoot();
+        if (!root) {
+          warnOfficialFailure(name, 'the Plugins page root is not on screen');
+          return;
+        }
+        openRepoPreview(repo, root, name, 'official');
       }).catch(() => {});
       return true;
     }
@@ -349,6 +398,8 @@ var dshMarketPeekModule = {
     // ----------------------------------------------------- page-leave watcher
     /** The market root the current preview belongs to; when it leaves the screen everything is restored. */
     let market = null;
+    /** 'community' (dshmarket) or 'official' (the built-in market); controls re-pinning. */
+    let marketKind = 'community';
     let watchTimer = 0;
 
     function startWatch() {
@@ -359,7 +410,21 @@ var dshMarketPeekModule = {
       watchTimer = 0;
     }
     function tick() {
-      if (!isShown(market)) {
+      if (market && !isShown(market)) {
+        // The built-in market navigates from its list to an in-page detail view; if the pinned root
+        // was replaced internally, move the dock to the still-visible Plugins page instead of
+        // closing the panel. Only a missing page root (user left Plugins) restores everything.
+        if (marketKind === 'official') {
+          const next = nextOfficialRoot(null, officialRootCandidates(), isShown);
+          if (next) {
+            market = next;
+            if (drawer) {
+              applyDock(drawer.getBoundingClientRect().width || currentWidth());
+              placeDrawer();
+            }
+            return;
+          }
+        }
         restoreAll();
         return;
       }
@@ -369,12 +434,14 @@ var dshMarketPeekModule = {
     function restoreAll() {
       closeBrowserTab();
       closeDrawer();
+      marketKind = 'community';
       // Leaving the market must not leave a stale README behind: the next visit refetches.
       cache.clear();
     }
     function maybeStop() {
       if (!drawer && !browserTab) {
         market = null;
+        marketKind = 'community';
         stopWatch();
       }
     }
@@ -473,10 +540,11 @@ var dshMarketPeekModule = {
       return openRepoPreview(repo, marketRootOf(link), link.getAttribute('title') || link.textContent || '');
     }
 
-    function openRepoPreview(repo, root, name) {
+    function openRepoPreview(repo, root, name, kind = 'community') {
       if (!root) return false;
       if (market && market !== root) restoreAll();
       market = root;
+      marketKind = kind;
       startWatch();
       if (getMode() === 'external') {
         window.open(repo.url, '_blank', 'noopener,noreferrer');
@@ -1008,6 +1076,7 @@ hr{border:0;border-top:1px solid ${dark ? '#3a3c40' : '#d8dee4'}}
       __test: {
         esc, parseRepo, readmeSources, renderMarkdown, readmeDocument, safeLinkUrl, safeImageUrl,
         normalizeMode, readMode, readWidth, clampWidthTo, officialMarket, resolveOfficialRepo, repoOfOfficialEntry,
+        nextOfficialRoot,
       },
     };
   },
