@@ -8,13 +8,28 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.3-2f6fed)](https://github.com/deepseek-ai/deepseek-harness)
 
-在 DeepSeek Harness 插件市场里点插件卡片时，**不再跳到外部浏览器**，直接在 DSH 里看插件详情：
+在 DeepSeek Harness 的插件市场里，把「看插件仓库和 README」留在 DSH 内部：右侧栏可见时用 DSH 内置浏览器在右侧栏打开仓库，否则在市场旁边停靠一个 README 面板。安装、收藏、评论、截图等按钮保持原行为，市场本身不被替换。
 
-- 有右侧栏时，用 DSH 内置浏览器在右侧栏打开插件的 GitHub 仓库；连续点多个插件只复用同一个页签。
-- 没有右侧栏时，在市场右侧停靠一个面板显示 README，市场自动让出位置，面板不遮挡内容。
-- 离开插件市场后自动恢复：面板关闭、市场恢复原宽度、预览页签关闭，右侧栏原本收起的会重新收起。
+## 这个插件解决什么问题？
 
-![插件市场速览：左侧是插件市场，右侧是停靠的 README 面板](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.0/assets/screenshot-1.png)
+- **点卡片就离开 DSH。** 社区 `dshmarket` 市场的卡片标题通常直接跳到外部浏览器里的 GitHub 页面；DSH 内置实验性市场的详情页有来源、版本和安装信息，但不显示 README。判断一个插件值不值得装，往往要在 DSH 和浏览器之间反复切换，或者手动复制仓库地址。
+- **看完回来，状态已经变了。** 为对比 README 临时打开的页签、拖宽的面板、展开过的右侧栏，离开市场后不会自动还原，下一次点卡片又要重新摆一遍。
+- **市场本身不该被改。** 安装、收藏、评论、截图这些操作属于市场；本插件只接管「打开仓库 / README」这一步，不替换市场页面，也不拦截市场自己的按钮。
+
+它不注入新的市场页面，也不修改市场数据；只在卡片被点击时决定把仓库 / README 展示在哪里，并在离开时恢复原状。
+
+## 它做什么（跟着截图看）
+
+1. **打开插件市场，点插件标题或卡片空白处。** 安装、收藏、评论、截图等按钮仍然执行原来的操作；按住 Ctrl / Cmd / Shift / Alt 点击则这一次走外部浏览器。
+   ![社区 dshmarket 市场：README 面板停靠在市场右侧](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.1/assets/screenshot-1.png)
+   上图：社区 `dshmarket` 市场里点开插件后，README 面板停靠在市场右侧，市场自动缩窄让位；面板底部显示来源（如 `raw.githubusercontent.com`）和当前点击行为。
+2. **右侧栏可见的会话页面：用 DSH 内置浏览器打开仓库。** 连续点不同插件时复用同一个预览页签，不会堆出一排标签；原本收起的右侧栏会先展开，离开后重新收起。
+3. **没有可见右侧栏的整页市场：停靠 README 面板。** 面板可拖左边缘调宽（会记住），右下角可把点击行为切到「外部浏览器」，按 Esc 或 × 关闭。
+   ![DSH 内置实验性市场：详情页照常打开，README 面板停靠在插件页右侧](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.1/assets/screenshot-2.png)
+   上图：DSH 内置实验性市场里点开插件后，市场自己的详情页照常打开（来源、版本和安装信息仍可操作），README 面板同时停靠在插件页右侧；面板顶部显示仓库名和所有者，内容为对应插件的 README。
+4. **离开市场后恢复。** 面板关闭、市场恢复原宽度、预览页签关闭，原本收起的右侧栏重新收起；解析过的 README 缓存同时清除，下次打开重新读取。
+
+两张截图都来自实机 E2E；第一张是社区 `dshmarket` 市场，第二张是 DSH 内置实验性市场。
 
 ## 功能
 
@@ -127,7 +142,7 @@ node --test test/*.test.mjs
 
 ## 版本
 
-当前版本 `0.2.0`，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+当前版本 `0.2.1`，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

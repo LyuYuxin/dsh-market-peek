@@ -1,6 +1,6 @@
 {
   "name": "dsh-market-peek",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Preview plugin-market entries inside DSH: open the repository in the right Sidebar's built-in browser, or show its README in a panel docked beside the market.",
   "license": "MIT",

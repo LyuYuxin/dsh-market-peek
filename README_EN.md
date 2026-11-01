@@ -8,13 +8,28 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![DSH](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.3-2f6fed)](https://github.com/deepseek-ai/deepseek-harness)
 
-Clicking a plugin card in the DeepSeek Harness plugin market **no longer jumps to an external browser** — the details open inside DSH:
+Keep "reading a plugin's repository and README" inside DeepSeek Harness: while a right Sidebar is visible, the repository opens in DSH's own browser tab there; otherwise a README panel docks beside the market. Install, favourite, comment and screenshot buttons keep their original behaviour, and the market page itself is not replaced.
 
-- With a right Sidebar on screen, the repository opens in DSH's own browser tab there; clicking more cards reuses the same preview tab.
-- Without a right Sidebar, a panel docks on the right of the market and shows the README; the market narrows to make room, so nothing is covered.
-- Leaving the market restores everything: the panel closes, the market gets its width back, the preview tab is closed, and a right Sidebar that was collapsed collapses again.
+## What problem does this plugin solve?
 
-![Plugin market peek: the market on the left and the docked README panel on the right](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.0/assets/screenshot-1.png)
+- **A card click leaves DSH.** In the community `dshmarket` market the card title usually opens the GitHub page in an external browser; DSH's built-in experimental market shows source, version and install facts in its detail view but no README. Judging whether a plugin is worth installing means switching between DSH and the browser, or copying the repository URL by hand.
+- **Coming back, the previous state is gone.** Tabs opened to compare READMEs, a panel width you dragged, a right Sidebar you expanded — none of that is restored after leaving the market, so the next card click means arranging it again.
+- **The market itself should not be changed.** Installing, favouriting, commenting and viewing screenshots belong to the market. This plugin only takes over the "open the repository / README" step: it does not replace the market page and does not intercept the market's own buttons.
+
+It adds no new market page and changes no market data; it only decides where the repository or README is shown when a card is clicked, and restores the previous state when you leave.
+
+## What it does (follow the screenshots)
+
+1. **Open the plugin market and click a plugin title or a blank part of a card.** Install, favourite, comment and screenshot buttons still do what they did before; Ctrl / Cmd / Shift / Alt-click opens the external browser for that one click.
+   ![Community dshmarket: the README panel docked on the right of the market](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.1/assets/screenshot-1.png)
+   Above: after opening a plugin in the community `dshmarket` market, the README panel is docked on the right and the market has narrowed to make room; the panel footer shows the source (for example `raw.githubusercontent.com`) and the current click behaviour.
+2. **On a conversation page with a visible right Sidebar: open the repository in DSH's built-in browser.** Consecutive card clicks reuse the same preview tab instead of piling up tabs; a right Sidebar that was collapsed expands first and collapses again when you leave.
+3. **On a full-page market without a visible right Sidebar: dock the README panel.** Drag its left edge to resize (remembered), use the footer to switch the click behaviour to **External browser**, and close it with Esc or ×.
+   ![DSH's built-in experimental market: its detail view still opens and the README panel is docked on the right of the Plugins page](https://raw.githubusercontent.com/LyuYuxin/dsh-market-peek/v0.2.1/assets/screenshot-2.png)
+   Above: after opening a plugin in DSH's built-in experimental market, the market's own detail view still opens (source, version and install facts remain usable) and the README panel is docked on the right of the Plugins page; its header shows the repository and owner name, and its body is that plugin's README.
+4. **Leaving the market restores everything.** The panel closes, the market gets its width back, the preview tab is closed and a right Sidebar that was collapsed collapses again; the parsed README cache is cleared as well, so the next open fetches it again.
+
+Both screenshots are real E2E captures: the first from the community `dshmarket` market, the second from DSH's built-in experimental market.
 
 ## Features
 
@@ -127,7 +142,7 @@ The tests have no third-party dependencies and cover GitHub URL parsing (`tree`/
 
 ## Version
 
-Current version `0.2.0`; see [CHANGELOG.md](CHANGELOG.md).
+Current version `0.2.1`; see [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

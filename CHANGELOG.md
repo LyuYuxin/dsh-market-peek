@@ -4,6 +4,35 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-11-01
+
+Documentation and storefront-only release. No runtime or behaviour change: `client.js`,
+`index.js`, the cordis patch and the plugin metadata are unchanged from 0.2.0. The module is
+still dependency-free, and the suite is still the same 17 tests.
+
+### Added
+
+- Bilingual "What problem does this plugin solve?" and "What it does (follow the
+  screenshots)" sections in `README.md` / `README_EN.md`: the problem, the step-by-step flow
+  with captioned screenshots, and the existing supported-markets, settings, limitations and
+  security sections kept in sync.
+- `assets/screenshot-2.png`, a real E2E capture of the DSH built-in market's detail page with
+  the plugin's README panel docked beside the Plugins page. `screenshots.json` now lists
+  `screenshot-1.png` and `screenshot-2.png`.
+- Both READMEs reference the screenshots through the `v0.2.1` raw URL; a
+  `.github/release-notes/v0.2.1.md` note is provided for the tag-push release workflow.
+
+### Documentation
+
+- Corrected the README wording that implied every card click always opens the right
+  Sidebar: the built-in browser is used only while a right Sidebar is visible, and the
+  docked README panel is the fallback. The new flow also states which market each screenshot
+  comes from (community `dshmarket` vs DSH's built-in experimental market).
+- Version references, screenshot tag URLs and the current-version footer were updated from
+  `0.2.0` to `0.2.1`.
+
+[0.2.1]: https://github.com/LyuYuxin/dsh-market-peek/releases/tag/v0.2.1
+
 ## [0.2.0] - 2026-10-31
 
 Release-quality pass for DSH 0.2.1-rc.3. The card-click interaction is unchanged in
